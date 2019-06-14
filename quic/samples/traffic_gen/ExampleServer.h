@@ -58,12 +58,15 @@ class ExampleServerTransportFactory : public quic::QuicServerTransportFactory {
 
 class ExampleServer {
  public:
-  explicit ExampleServer(const std::string& host = "::1", uint16_t port = 6666)
+  explicit ExampleServer(
+      const std::string& host = "::1", uint16_t port = 6666,
+      CongestionControlType cc_algo = CongestionControlType::Cubic)
       : host_(host), port_(port), server_(QuicServer::createQuicServer()) {
     server_->setQuicServerTransportFactory(
         std::make_unique<ExampleServerTransportFactory>());
     server_->setFizzContext(quic::test::createServerCtx());
     TransportSettings settings;
+    settings.defaultCongestionController = cc_algo;
     server_->setTransportSettings(settings);
   }
 

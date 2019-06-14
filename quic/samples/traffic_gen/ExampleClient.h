@@ -20,8 +20,9 @@ class ExampleClient : public quic::QuicSocket::ConnectionCallback,
                       public quic::QuicSocket::WriteCallback,
                       public quic::QuicSocket::DataExpiredCallback {
  public:
-  ExampleClient(const std::string& host, uint16_t port)
-      : host_(host), port_(port) {}
+  ExampleClient(const std::string& host, uint16_t port,
+                CongestionControlType cc_algo = CongestionControlType::Cubic)
+      : host_(host), port_(port), cc_algo_(cc_algo) {}
 
   void readAvailable(quic::StreamId streamId) noexcept override {
     auto readData = quicClient_->read(streamId, 0);
@@ -118,6 +119,7 @@ class ExampleClient : public quic::QuicSocket::ConnectionCallback,
       quicClient_->addNewPeerAddress(addr);
 
       TransportSettings settings;
+      settings.defaultCongestionController = cc_algo_;
       quicClient_->setTransportSettings(settings);
 
       LOG(INFO) << "ExampleClient connecting to " << addr.describe();
@@ -156,6 +158,7 @@ class ExampleClient : public quic::QuicSocket::ConnectionCallback,
 
   std::string host_;
   uint16_t port_;
+  CongestionControlType cc_algo_;
   std::shared_ptr<quic::QuicClientTransport> quicClient_;
   std::map<quic::StreamId, folly::IOBufQueue> pendingOutput_;
   std::map<quic::StreamId, uint64_t> recvOffsets_;
