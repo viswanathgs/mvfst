@@ -74,10 +74,10 @@ struct TransportSettings {
   // flowControlWindowFrequency * window if the flow control changes.
   uint16_t flowControlWindowFrequency{2};
   // batching mode
-  QuicBatchingMode batchingMode{QuicBatchingMode::BATCHING_MODE_GSO};
-  // maximum number of packets we can batch
-  // does not apply to BATCHING_MODE_NONE
-  uint32_t batchingNum{kDefaultQuicBatchingNum};
+  QuicBatchingMode batchingMode{QuicBatchingMode::BATCHING_MODE_NONE};
+  // maximum number of packets we can batch. This does not apply to
+  // BATCHING_MODE_NONE
+  uint32_t maxBatchSize{kDefaultQuicMaxBatchSize};
   // Sets network unreachable to be a non fatal error. In some environments,
   // EHOSTUNREACH or ENETUNREACH could just be because the routing table is
   // being setup. This option makes those non fatal connection errors.
@@ -107,6 +107,9 @@ struct TransportSettings {
   bool partialReliabilityEnabled{false};
   // Whether the endpoint allows peer to migrate to new address
   bool disableMigration{true};
+  // default stateless reset secret for stateless reset token
+  folly::Optional<std::array<uint8_t, kStatelessResetTokenSecretLength>>
+      statelessResetTokenSecret;
 };
 
 } // namespace quic

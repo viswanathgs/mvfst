@@ -9,10 +9,12 @@
 #include <quic/common/test/TestUtils.h>
 
 #include <fizz/crypto/test/TestUtil.h>
+#include <fizz/protocol/clock/test/Mocks.h>
 #include <fizz/protocol/test/Mocks.h>
 #include <quic/api/QuicTransportFunctions.h>
 #include <quic/codec/DefaultConnectionIdAlgo.h>
 #include <quic/handshake/test/Mocks.h>
+#include <quic/server/handshake/StatelessResetGenerator.h>
 
 namespace {
 std::deque<quic::OutstandingPacket>::reverse_iterator
@@ -163,6 +165,7 @@ std::shared_ptr<fizz::server::FizzServerContext> createServerCtx() {
   serverCtx->setFactory(std::make_shared<QuicFizzFactory>());
   serverCtx->setCertManager(std::move(certManager));
   serverCtx->setOmitEarlyRecordLayer(true);
+  serverCtx->setClock(std::make_shared<fizz::test::MockClock>());
   return serverCtx;
 }
 
@@ -190,7 +193,8 @@ class AcceptingTicketCipher : public fizz::server::TicketCipher {
     resState.serverCert = cachedPsk_.cachedPsk.serverCert;
     resState.alpn = cachedPsk_.cachedPsk.alpn;
     resState.ticketAgeAdd = 0;
-    resState.ticketIssueTime = std::chrono::system_clock::now();
+    resState.ticketIssueTime = std::chrono::system_clock::time_point();
+    resState.handshakeTime = std::chrono::system_clock::time_point();
     AppToken appToken;
     appToken.transportParams = createTicketTransportParameters(
         cachedPsk_.transportParams.negotiatedVersion,
@@ -247,9 +251,10 @@ QuicCachedPsk setupZeroRttOnClientCtx(
   psk.serverCert = mockCert;
   psk.alpn = clientCtx.getSupportedAlpns()[0];
   psk.ticketAgeAdd = 1;
-  psk.ticketIssueTime = std::chrono::system_clock::now();
+  psk.ticketIssueTime = std::chrono::system_clock::time_point();
   psk.ticketExpirationTime =
-      std::chrono::system_clock::now() + std::chrono::minutes(100);
+      std::chrono::system_clock::time_point(std::chrono::minutes(100));
+  psk.ticketHandshakeTime = std::chrono::system_clock::time_point();
   psk.maxEarlyDataSize = 2;
 
   quicCachedPsk.transportParams.negotiatedVersion = version;
@@ -585,6 +590,21 @@ folly::IOBufQueue bufToQueue(Buf buf) {
   buf->coalesce();
   queue.append(std::move(buf));
   return queue;
+}
+
+StatelessResetToken generateStatelessResetToken() {
+  StatelessResetSecret secret;
+  folly::Random::secureRandom(secret.data(), secret.size());
+  folly::SocketAddress address("1.2.3.4", 8080);
+  StatelessResetGenerator generator(secret, address.getFullyQualified());
+
+  return generator.generateToken(ConnectionId({0x14, 0x35, 0x22, 0x11}));
+}
+
+std::array<uint8_t, kStatelessResetTokenSecretLength> getRandSecret() {
+  std::array<uint8_t, kStatelessResetTokenSecretLength> secret;
+  folly::Random::secureRandom(secret.data(), secret.size());
+  return secret;
 }
 
 } // namespace test

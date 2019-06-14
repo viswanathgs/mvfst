@@ -194,9 +194,9 @@ enum class QuicBatchingMode : uint32_t {
 
 QuicBatchingMode getQuicBatchingMode(uint32_t val);
 
-// default QUIC batching mode - currently used only
+// default QUIC batching size - currently used only
 // by BATCHING_MODE_GSO
-constexpr uint32_t kDefaultQuicBatchingNum = 64;
+constexpr uint32_t kDefaultQuicMaxBatchSize = 16;
 
 // rfc6298:
 constexpr int kRttAlpha = 8;
@@ -332,9 +332,6 @@ constexpr uint32_t kRequiredMaxEarlyDataSize = 0xffffffff;
 // and 16 bytes of the token and 16 bytes of randomness
 constexpr uint16_t kMinStatelessPacketSize = 13 + 16 + 16;
 
-// TODO: remove this when we have a stateless reset generator.
-constexpr folly::StringPiece kTestStatelessResetToken = "aaaabbbbccccdddd";
-
 constexpr std::chrono::milliseconds kHappyEyeballsV4Delay = 150ms;
 
 constexpr std::chrono::milliseconds kHappyEyeballsConnAttemptDelayWithCache =
@@ -355,6 +352,8 @@ constexpr std::chrono::seconds kTimeToRetainLastCongestionAndRttState = 60s;
 constexpr uint32_t kMaxNumMigrationsAllowed = 6;
 
 constexpr auto kExpectedNumOfParamsInTheTicket = 8;
+
+constexpr auto kStatelessResetTokenSecretLength = 32;
 
 // default capability of QUIC partial reliability
 constexpr TransportPartialReliabilitySetting kDefaultPartialReliability = false;
