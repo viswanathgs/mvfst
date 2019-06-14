@@ -33,3 +33,17 @@ target_link_libraries(
   ${LIBGMOCK_LIBRARIES}
   ${LIBGTEST_LIBRARIES}
 )
+
+add_executable(traffic_gen traffic_gen/main.cpp)
+
+target_compile_options(
+  traffic_gen
+  PRIVATE
+  ${_QUIC_COMMON_COMPILE_OPTIONS}
+)
+
+target_link_libraries(
+  traffic_gen PUBLIC
+  mvfst_test_utils
+  ${GFLAGS_LIBRARIES}
+)
