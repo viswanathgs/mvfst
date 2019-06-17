@@ -11,6 +11,7 @@
 #include <quic/api/QuicSocket.h>
 #include <quic/client/QuicClientTransport.h>
 #include <quic/common/test/TestUtils.h>
+#include <quic/congestion_control/CongestionControllerFactory.h>
 
 namespace quic {
 namespace traffic_gen {
@@ -36,8 +37,8 @@ class ExampleClient : public quic::QuicSocket::ConnectionCallback,
     } else {
       recvOffsets_[streamId] += copy->length();
     }
-    LOG(INFO) << "Client received data=" << copy->computeChainDataLength()
-              << " bytes on stream=" << streamId;
+    VLOG(2) << "Client received data=" << copy->computeChainDataLength()
+            << " bytes on stream=" << streamId;
   }
 
   void readError(
@@ -117,6 +118,8 @@ class ExampleClient : public quic::QuicSocket::ConnectionCallback,
       quicClient_->setCertificateVerifier(
           test::createTestCertificateVerifier());
       quicClient_->addNewPeerAddress(addr);
+      quicClient_->setCongestionControllerFactory(
+          std::make_shared<DefaultCongestionControllerFactory>());
 
       TransportSettings settings;
       settings.defaultCongestionController = cc_algo_;

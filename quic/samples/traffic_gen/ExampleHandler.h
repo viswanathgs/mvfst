@@ -109,7 +109,7 @@ class ExampleHandler : public quic::QuicSocket::ConnectionCallback,
 
   void onStreamWriteReady(quic::StreamId id,
                           uint64_t maxToSend) noexcept override {
-    LOG(INFO) << "socket is write ready with maxToSend=" << maxToSend;
+    VLOG(1) << "socket is write ready with maxToSend=" << maxToSend;
     response(id, input_[id]);
   }
 
