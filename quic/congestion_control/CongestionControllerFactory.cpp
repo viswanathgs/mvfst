@@ -11,6 +11,7 @@
 #include <quic/congestion_control/Copa.h>
 #include <quic/congestion_control/NewReno.h>
 #include <quic/congestion_control/QuicCubic.h>
+#include <quic/congestion_control/rl/RLCongestionController.h>
 
 #include <memory>
 
@@ -32,6 +33,9 @@ DefaultCongestionControllerFactory::makeCongestionController(
       break;
     case CongestionControlType::BBR:
       throw std::runtime_error("Unsupported Congestion Control Algorithm");
+    case CongestionControlType::RL:
+      congestionController = std::make_unique<RLCongestionController>(conn);
+      break;
     case CongestionControlType::None:
       break;
   }

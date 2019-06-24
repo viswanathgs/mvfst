@@ -10,6 +10,7 @@ add_library(
   Copa.cpp
   NewReno.cpp
   QuicCubic.cpp
+  rl/RLCongestionController.cpp
 )
 
 target_include_directories(

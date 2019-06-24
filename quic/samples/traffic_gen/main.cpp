@@ -35,6 +35,8 @@ int main(int argc, char* argv[]) {
     cc_algo = quic::CongestionControlType::Copa;
   } else if (FLAGS_cc_algo == "bbr") {
     cc_algo = quic::CongestionControlType::BBR;
+  } else if (FLAGS_cc_algo == "rl") {
+    cc_algo = quic::CongestionControlType::RL;
   } else if (FLAGS_cc_algo == "none") {
     cc_algo = quic::CongestionControlType::None;
   } else {
