@@ -253,5 +253,22 @@ StatelessResetToken generateStatelessResetToken();
 
 std::array<uint8_t, kStatelessResetTokenSecretLength> getRandSecret();
 
+RegularQuicWritePacket createNewPacket(
+    PacketNum packetNum,
+    PacketNumberSpace pnSpace);
+
+std::vector<QuicVersion> versionList(
+    std::initializer_list<QuicVersionType> types);
+
+RegularQuicWritePacket createRegularQuicWritePacket(
+    StreamId streamId,
+    uint64_t offset,
+    uint64_t len,
+    bool fin);
+
+VersionNegotiationPacket createVersionNegotiationPacket();
+
+RegularQuicWritePacket createPacketWithAckFrames();
+
 } // namespace test
 } // namespace quic

@@ -281,9 +281,10 @@ void setupCtxWithTestCert(fizz::server::FizzServerContext& ctx) {
   ctx.setCertManager(std::move(certManager));
 }
 
-std::unique_ptr<MockAead> createNoOpAead() {
+template <class T>
+std::unique_ptr<T> createNoOpAeadImpl() {
   // Fake that the handshake has already occured
-  auto aead = std::make_unique<NiceMock<fizz::test::MockAead>>();
+  auto aead = std::make_unique<NiceMock<T>>();
   ON_CALL(*aead, _encrypt(_, _, _))
       .WillByDefault(Invoke([&](auto& buf, auto, auto) {
         if (buf) {
@@ -299,14 +300,20 @@ std::unique_ptr<MockAead> createNoOpAead() {
   ON_CALL(*aead, _tryDecrypt(_, _, _))
       .WillByDefault(
           Invoke([&](auto& buf, auto, auto) { return buf->clone(); }));
-  ON_CALL(*aead, keyLength()).WillByDefault(Return(16));
-  ON_CALL(*aead, ivLength()).WillByDefault(Return(16));
   ON_CALL(*aead, getCipherOverhead()).WillByDefault(Return(0));
   return aead;
 }
 
+std::unique_ptr<MockAead> createNoOpAead() {
+  return createNoOpAeadImpl<MockAead>();
+}
+
 std::unique_ptr<fizz::test::MockAead> createNoOpFizzAead() {
-  return createNoOpAead();
+  // Fake that the handshake has already occured
+  auto aead = createNoOpAeadImpl<fizz::test::MockAead>();
+  ON_CALL(*aead, keyLength()).WillByDefault(Return(16));
+  ON_CALL(*aead, ivLength()).WillByDefault(Return(16));
+  return aead;
 }
 
 std::unique_ptr<PacketNumberCipher> createNoOpHeaderCipher() {
@@ -605,6 +612,71 @@ std::array<uint8_t, kStatelessResetTokenSecretLength> getRandSecret() {
   std::array<uint8_t, kStatelessResetTokenSecretLength> secret;
   folly::Random::secureRandom(secret.data(), secret.size());
   return secret;
+}
+
+RegularQuicWritePacket createNewPacket(
+    PacketNum packetNum,
+    PacketNumberSpace pnSpace) {
+  switch (pnSpace) {
+    case PacketNumberSpace::Initial:
+      return RegularQuicWritePacket(LongHeader(
+          LongHeader::Types::Initial,
+          getTestConnectionId(1),
+          getTestConnectionId(2),
+          packetNum,
+          QuicVersion::QUIC_DRAFT));
+    case PacketNumberSpace::Handshake:
+      return RegularQuicWritePacket(LongHeader(
+          LongHeader::Types::Handshake,
+          getTestConnectionId(0),
+          getTestConnectionId(4),
+          packetNum,
+          QuicVersion::QUIC_DRAFT));
+    case PacketNumberSpace::AppData:
+      return RegularQuicWritePacket(ShortHeader(
+          ProtectionType::KeyPhaseOne, getTestConnectionId(), packetNum));
+  }
+}
+
+std::vector<QuicVersion> versionList(
+    std::initializer_list<QuicVersionType> types) {
+  std::vector<QuicVersion> versions;
+  for (auto type : types) {
+    versions.push_back(static_cast<QuicVersion>(type));
+  }
+  return versions;
+}
+
+RegularQuicWritePacket createRegularQuicWritePacket(
+    StreamId streamId,
+    uint64_t offset,
+    uint64_t len,
+    bool fin) {
+  auto regularWritePacket = createNewPacket(10, PacketNumberSpace::Initial);
+  WriteStreamFrame frame(streamId, offset, len, fin);
+  regularWritePacket.frames.emplace_back(frame);
+  return regularWritePacket;
+}
+
+VersionNegotiationPacket createVersionNegotiationPacket() {
+  auto versions = {QuicVersion::VERSION_NEGOTIATION, QuicVersion::MVFST};
+  auto packet = VersionNegotiationPacketBuilder(
+                    getTestConnectionId(0), getTestConnectionId(1), versions)
+                    .buildPacket()
+                    .first;
+  return packet;
+}
+
+RegularQuicWritePacket createPacketWithAckFrames() {
+  RegularQuicWritePacket packet =
+      createNewPacket(100, PacketNumberSpace::Initial);
+  WriteAckFrame ackFrame;
+  ackFrame.ackDelay = 111us;
+  ackFrame.ackBlocks.insert(900, 1000);
+  ackFrame.ackBlocks.insert(500, 700);
+
+  packet.frames.emplace_back(std::move(ackFrame));
+  return packet;
 }
 
 } // namespace test

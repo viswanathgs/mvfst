@@ -1,6 +1,8 @@
 
 ![alt text](logo.png "MVFST")
 
+[![Build Status](https://api.travis-ci.com/facebookincubator/mvfst.svg?branch=master)](https://travis-ci.com/facebookincubator/mvfst)
+
 ## Introduction
 `mvfst` (Pronounced *move fast*) is a client and server implementation of [IETF QUIC](https://tools.ietf.org/html/draft-ietf-quic-transport-20) protocol in C++ by Facebook. QUIC is a UDP based reliable, multiplexed transport protocol that will become an internet standard. The goal of `mvfst` is to build a performant implementation of the QUIC transport protocol that applications could adapt for use cases on both the internet and the data-center. `mvfst` has been tested at scale on android, iOS apps, as well as servers and has several features to support large scale deployments.
 
@@ -95,17 +97,17 @@ You might need to run the script as root to install to certain directories.
 By default the build script `build_helper.sh` enables the building of test target (i.e. runs with `-DBUILD_TEST=ON` option). Since some of tests in `mvfst` require some test artifacts of Fizz, it is necessary to supply the path of the Fizz src directory (via option `DFIZZ_PROJECT`) to correctly build all test targets in `mvfst`.
 
 ## Run a sample client and server
-Building the test targets of `mvfst` (or via `build_helper.sh`) should automatically build the sample client and server binaries as well. The server will automatically bind to `::1` by default if no host is used, but you can then spin a simple echo server by running:
+Building the test targets of `mvfst` (or via `build_helper.sh`) should automatically build the sample client and server binaries into the default `_build/build` directory (or whichever target directory was specified). The server will automatically bind to `::1` by default if no host is used, but you can then spin a simple echo server by running:
 ```
-./quic/samples/echo -mode=server -host=<host> -port=<port>
+./_build/build/quic/samples/echo -mode=server -host=<host> -port=<port>
 ```
 and to run a client:
 ```
-./quic/samples/echo -mode=client -host=<host> -port=<port>
+./_build/build/quic/samples/echo -mode=client -host=<host> -port=<port>
 ```
 For more options, see
 ```
-./quic/samples/echo --help
+./_build/build/quic/samples/echo --help
 ```
 ## Contributing
 
